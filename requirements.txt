@@ -1,0 +1,13 @@
+PyPDF2
+fitz
+pillow
+langchain_google_genai
+google
+langchain_community
+langchain
+python-dotenv
+frontend
+faiss-cpu
+fastapi
+uvicorn
+pymupdf

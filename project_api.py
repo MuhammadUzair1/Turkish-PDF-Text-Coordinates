@@ -2,9 +2,10 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
+import requests
 import time
 
-from turkish_project_llm import extract_text_with_coordinates
+from turkish_project_llm import extract_text_from_pdf
 
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -17,12 +18,9 @@ class MyMiddleware(BaseHTTPMiddleware):
         process_time = time.time() - start_time
         response.headers["X-Process-Time"] = str(process_time)
         return response
-    
-origins = [
-    "http://localhost:4200",
-    "http://localhost:3000",
-    'https://lssfrontend.vercel.app/'
-]
+
+class PDFRequest(BaseModel):
+    url: str
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,10 +32,21 @@ app.add_middleware(
 
 app.add_middleware(MyMiddleware)
 
-@app.post("/process_book/")
-async def get_response(file):     
-    responses = extract_text_with_coordinates(file)
-    return {"response": responses}
+@app.post("/process_book")
+async def process_book(pdf_request: PDFRequest):
+    pdf_url = pdf_request.url
+    try:
+        # Fetching PDF content from the URL
+        response = requests.get(pdf_url)
+        response.raise_for_status()
+        pdf_content = response.content
+
+        # Processing PDF content to extract text coordinates
+        text_coordinates = extract_text_from_pdf(pdf_content)
+
+        return {"text_coordinates": text_coordinates}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

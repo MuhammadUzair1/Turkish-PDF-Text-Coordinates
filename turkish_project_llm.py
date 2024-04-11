@@ -154,53 +154,56 @@ def extract_text_with_coordinates(pdf_path, text, page):
     # Close the PDF
     pdf_document.close()
 
-def extract_text_from_pdf(pdf):
+def extract_text_from_pdf(pdf_content):
     results = []
 
-    with open(pdf, 'rb') as file:
-        reader = PyPDF2.PdfReader(file)
+    try:
+        with open(pdf_content, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
 
-        for page_num in range(len(reader.pages)):
-            response = []
-            page = reader.pages[page_num]
-            page_text = page.extract_text()
-            text = page_text.encode('utf-8', errors='ignore').decode('utf-8')
+            for page_num in range(len(reader.pages)):
+                response = []
+                page = reader.pages[page_num]
+                page_text = page.extract_text()
+                text = page_text.encode('utf-8', errors='ignore').decode('utf-8')
 
-            ans = get_turkish_words(str(text))
-            print(ans)
-            response.append(ans.text)
-            # print(ans.text)
+                ans = get_turkish_words(str(text))
+                print(ans)
+                response.append(ans.text)
+                # print(ans.text)
 
-            final_list = []
-            for i in response:
-                split_sent = i.split("\n")
-                for j in split_sent:
-                    split_text = j.split(';')
-                    for k in split_text:
-                        cleaned_text = re.sub(pattern, '', k)
-                        text = cleaned_text.replace('\t', ' ').strip()
-                        if text and text not in final_list:
-                            final_list.append(text)
+                final_list = []
+                for i in response:
+                    split_sent = i.split("\n")
+                    for j in split_sent:
+                        split_text = j.split(';')
+                        for k in split_text:
+                            cleaned_text = re.sub(pattern, '', k)
+                            text = cleaned_text.replace('\t', ' ').strip()
+                            if text and text not in final_list:
+                                final_list.append(text)
 
-            # Check if the final_list has an odd length
-            if len(final_list) % 2 != 0:
-                # Remove the last element
-                final_list.pop()
+                # Check if the final_list has an odd length
+                if len(final_list) % 2 != 0:
+                    # Remove the last element
+                    final_list.pop()
 
-            # Iterate over the final_list in pairs
-            for i in range(0, len(final_list), 2):
-                start = extract_text_with_coordinates(pdf, final_list[i], page_num)
-                end = extract_text_with_coordinates(pdf, final_list[i+1], page_num)
+                # Iterate over the final_list in pairs
+                for i in range(0, len(final_list), 2):
+                    start = extract_text_with_coordinates(pdf_content, final_list[i], page_num)
+                    end = extract_text_with_coordinates(pdf_content, final_list[i+1], page_num)
 
-                if start is not None and end is not None:
-                    result = {
-                        "id": len(results) + 1,
-                        "start": start,
-                        "end": end,
-                        "page_number": page_num + 1,
-                        "text": final_list[i]
-                    }
-                    results.append(result)
+                    if start is not None and end is not None:
+                        result = {
+                            "id": len(results) + 1,
+                            "start": start,
+                            "end": end,
+                            "page_number": page_num + 1,
+                            "text": final_list[i]
+                        }
+                        results.append(result)
+    except Exception as e:
+        # Handle exceptions appropriately, e.g., log the error
+        print("Error:", e)
 
     return results
-

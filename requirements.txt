@@ -1,5 +1,4 @@
 PyPDF2
-fitz
 pillow
 langchain_google_genai
 google

@@ -1,12 +1,15 @@
+import time
+from uuid import uuid4
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
-import requests
-import time
-
+from pdf_utils import (
+    download_file_from_google_drive,
+    delete_file,
+    MEDIAFILES
+)
 from turkish_project_llm import extract_text_from_pdf
-
 from starlette.middleware.base import BaseHTTPMiddleware
 
 app = FastAPI()
@@ -36,17 +39,29 @@ app.add_middleware(MyMiddleware)
 async def process_book(pdf_request: PDFRequest):
     pdf_url = pdf_request.url
     try:
+        file_unique_name = str(uuid4())[25:] + ".pdf"
+        file_id = pdf_url.rsplit("com/file/d/")[-1][:33]
+        
+        download_file_from_google_drive(file_id=file_id, filename=file_unique_name)
+
         # Fetching PDF content from the URL
-        response = requests.get(pdf_url)
-        response.raise_for_status()
-        pdf_content = response.content
+        # response = requests.get(pdf_url)
+        # response.raise_for_status()
+        # pdf_content = response.content
 
+        
         # Processing PDF content to extract text coordinates
-        text_coordinates = extract_text_from_pdf(pdf_content)
+        file_path = f"{MEDIAFILES}/{file_unique_name}"
+        text_coordinates = extract_text_from_pdf(file_path=file_path)
 
+        delete_file(file_path)
+        
         return {"text_coordinates": text_coordinates}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+    
+
 
 if __name__ == "__main__":
     import uvicorn

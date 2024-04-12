@@ -154,11 +154,11 @@ def extract_text_with_coordinates(pdf_path, text, page):
     # Close the PDF
     pdf_document.close()
 
-def extract_text_from_pdf(pdf_content):
+def extract_text_from_pdf(file_path):
     results = []
 
     try:
-        with open(pdf_content, 'rb') as file:
+        with open(file_path, 'rb') as file:
             reader = PyPDF2.PdfReader(file)
 
             for page_num in range(len(reader.pages)):
@@ -170,7 +170,6 @@ def extract_text_from_pdf(pdf_content):
                 ans = get_turkish_words(str(text))
                 print(ans)
                 response.append(ans.text)
-                # print(ans.text)
 
                 final_list = []
                 for i in response:
